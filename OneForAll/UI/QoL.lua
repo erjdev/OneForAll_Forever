@@ -819,6 +819,9 @@ local function createQoLPanel(parent)
   g = group(c, N"Spellbook")
   check(g, N"Trainer button in the spellbook", N"A book button in the spellbook (P) opens the trainer window.", N"Shows the spells and ranks your class trainer teaches that you do not know yet, next to the spellbook.", "spellbookTrainer",
     nil, nil, function(v) Q.Set("spellbookTrainer", v); local psf = rawget(_G, "PlayerSpellsFrame"); local b = type(psf) == "table" and psf.ofaTrainerButton; if b then b:SetShown(v) end end)
+  if C_ClickBindings then
+    check(g, N"Click Casting shortcut", N"Shows a button in the spellbook title bar that opens Click Casting settings.", nil, "spellbookClickCasting")
+  end
   -- POPUPS & ALERTS (moved from Settings, 5.6.8, user 22.10.)
   c = category("alerts", N"Popups & Alerts", "Interface\\Icons\\INV_Misc_Bell_01", N"Popups that come up on their own while you play.")
   g = group(c, N"Buff reminder")
