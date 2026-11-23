@@ -13,6 +13,7 @@ local function N(s) return s end -- marks an English text translated where it is
 FLT.QoL = QoL
 
 local DEFAULTS = {
+  thanksEmote = "THANK",
   lootFeedQuality = 1, lootFeedMoney = true,
   inviteMode = "friendsguild", keywordMode = "friendsguild", keyword = "inv", duelMode = "friendsguild",
   durabilityPct = 20, mmDir = "auto", logoColor = "teal", -- logo color: turquoise by default (user 27.10.)
@@ -620,13 +621,52 @@ local function nameFromGUID(guid)
   return (name:match("^([^%-]+)")) -- the emote wants the plain name
 end
 
-local function sendThank(name)
-  if C_ChatInfo and C_ChatInfo.PerformEmote then
-    local ok, restricted = pcall(C_ChatInfo.PerformEmote, "THANK", name)
-    return ok and not (readable(restricted) and restricted)
+local sendThank
+do
+  -- These faction cries have client strings, but Forever ignores the native commands.
+  local unavailable = { FORTHEALLIANCE = true, FORTHEHORDE = true }
+
+  function QoL.BuffEmotes()
+    local labels = {}
+    local commands = hash_EmoteTokenList
+    local hasCommandMap = type(commands) == "table" and next(commands) ~= nil
+    for i = 1, MAXEMOTEINDEX or 0 do
+      local prefix = "EMOTE" .. i
+      local token = _G[prefix .. "_TOKEN"]
+      if type(token) == "string" and token ~= "" and not unavailable[token] then
+        local alias = 1
+        local command = _G[prefix .. "_CMD1"]
+        while type(command) == "string" do
+          if command:match("^/[^%s/]+$") and (not hasCommandMap or commands[strupper(command)] == token) then
+            labels[token] = command:lower()
+            break
+          end
+          alias = alias + 1
+          command = _G[prefix .. "_CMD" .. alias]
+        end
+      end
+    end
+    labels.THANK = labels.THANK or "/thank"
+    return labels
   end
-  if DoEmote then return (pcall(DoEmote, "THANK", name)) end
-  return false
+
+  function sendThank(name, token)
+    local perform = C_ChatInfo and C_ChatInfo.PerformEmote or DoEmote
+    if not perform then return false end
+    local ok, restricted = pcall(perform, token, name)
+    if ok and readable(restricted) and restricted then
+      unavailable[token] = true
+      return false
+    end
+    return ok
+  end
+end
+
+function QoL.BuffEmote()
+  local labels = QoL.BuffEmotes()
+  local token = QoL.Get("thanksEmote")
+  if not labels[token] then token = "THANK" end
+  return token, labels[token]
 end
 
 local function fireThanks(guid)
@@ -642,7 +682,8 @@ local function fireThanks(guid)
   thanksPending[guid] = nil
   if thanked[guid] and t - thanked[guid] < THANKS_PLAYER_CD then logThanks(string.format(L["%s from %s: thanked recently"], p.spell, p.name)); return end
   thanked[guid], lastThanks = t, t
-  if sendThank(p.name) then logThanks(string.format(L["%s from %s: /thank"], p.spell, p.name))
+  local token, label = QoL.BuffEmote()
+  if sendThank(p.name, token) then logThanks(string.format(L["%s from %s: %s"], p.spell, p.name, label))
   else logThanks(string.format(L["%s from %s: the game did not allow the emote"], p.spell, p.name)) end
 end
 
