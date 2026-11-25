@@ -126,6 +126,7 @@ FLT.DUNGEON_REGISTRY["Shadowfang Keep"] = {
         {
             name = "Fel Steed / Shadow Charger",
             npcID = 3864,
+            optional = true,
             displayID = 1952,
             aliases = {"Fel Steed", "Shadow Charger", "Fel Steed / Shadow Charger"},
             loot = {
@@ -229,13 +230,6 @@ FLT.DUNGEON_REGISTRY["Shadowfang Keep"] = {
                 {6220, "Meteor Shard", "One-Hand, Dagger", 3},
                 {6324, "Robes of Arugal", "Chest, Cloth", 3},
                 {6392, "Belt of Arugal", "Waist, Cloth", 3},
-            },
-        },
-        {
-            description = "Only during a seasonal event (Hallow's End).",
-            name = "Sever",
-            npcID = 14682,
-            loot = {
             },
         },
     },

@@ -481,7 +481,6 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
             name = "Pyromancer Loregrain",
             npcID = 9024,
             displayID = 8762,
-            rare = true,
             loot = {
                 {11747, "Flamestrider Robes", "Chest, Leather", 3},
                 {11748, "Pyric Caduceus", "Ranged, Wand", 3},
@@ -510,16 +509,6 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
                 {11783, "Chillsteel Girdle", "Waist, Mail", 3},
                 {11784, "Arbiter's Blade", "Main Hand, Sword", 3},
                 {22241, "Dark Warder's Pauldrons", "Shoulder, Leather", 3},
-            },
-        },
-        {
-            name = "Verek",
-            npcID = 9042,
-            displayID = 9019,
-            loot = {
-                {11755, "Verek's Collar", "Neck", 3},
-                {22242, "Verek's Leash", "Waist, Mail", 3},
-                {276884, "Verek's Loyal Wraps", "Wrist, Cloth", 3},
             },
         },
         {
@@ -570,6 +559,7 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
         {
             name = "Hurley Blackbreath",
             npcID = 9537,
+            displayID = 8658, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             loot = {
                 {11735, "Ragefury Eyepatch", "Head, Leather", 3},
                 {18043, "Coal Miner Boots", "Feet, Leather", 3},
@@ -592,6 +582,7 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
         {
             name = "Plugger Spazzring",
             npcID = 9499,
+            displayID = 8652, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             loot = {
                 {12791, "Barman Shanker", "Main Hand, Dagger", 3},
                 {12793, "Mixologist's Tunic", "Chest, Leather", 3},
@@ -625,6 +616,7 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
         {
             name = "Doom'rel",
             npcID = 9039,
+            displayID = 8687, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             description = "Leader of the Seven; the Chest of The Seven opens after the fight.",
             loot = {
                 {11926, "Deathdealer Breastplate", "Chest, Mail", 3},
@@ -634,6 +626,7 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
         {
             name = "Anger'rel",
             npcID = 9035,
+            displayID = 8686, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             description = "One of the Seven, the Dark Iron spirits fought in turn before Doom'rel.",
             loot = {
                 {11925, "Ghostshroud", "Head, Leather", 3},
@@ -654,6 +647,7 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
         {
             name = "Princess Moira Bronzebeard",
             npcID = 8929,
+            optional = true,
             displayID = 8705,
             loot = {
                 {12553, "Swiftwalker Boots", "Feet, Leather", 3},
@@ -678,6 +672,29 @@ FLT.DUNGEON_REGISTRY["Blackrock Depths"] = {
                 {11934, "Emperor's Seal", "Finger", 3},
                 {22204, "Wristguards of Renown", "Wrist, Leather", 3},
                 {22207, "Sash of the Grand Hunt", "Waist, Mail", 3},
+            },
+        },
+        {
+            name = "Theldren",
+            npcID = 16059,
+            optional = true,
+            displayID = 15981, -- CMaNGOS classic-db creature_template
+            description = "Summoned in the Ring of Law with the Banner of Provocation (Tier 0.5 set quests); the loot is in the Arena Spoils.",
+            loot = { -- loot: CMaNGOS classic-db (user 23.11.2026)
+                {22305, "Ironweave Mantle", "Shoulder, Cloth", 3},
+                {22317, "Lefty's Brass Knuckle", "One-Hand, Fist Weapon", 3},
+                {22318, "Malgen's Long Bow", "Ranged, Bow", 3},
+                {22330, "Shroud of Arcane Mastery", "Back", 3},
+            },
+        },
+        {
+            name = "Ribbly Screwspigot",
+            npcID = 9543,
+            optional = true,
+            displayID = 8667, -- CMaNGOS classic-db creature_template
+            description = "Optional: his head is wanted for the quest Ribbly Screwspigot (in the Grim Guzzler).",
+            loot = { -- loot: CMaNGOS classic-db (user 23.11.2026)
+                {11612, "Plans: Dark Iron Plate", "Blueprint", 3},
             },
         },
     },

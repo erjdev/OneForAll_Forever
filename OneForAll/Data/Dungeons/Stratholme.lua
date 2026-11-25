@@ -240,12 +240,6 @@ FLT.DUNGEON_REGISTRY["Stratholme"] = {
             },
         },
         {
-            name = "Stratholme Courier",
-            npcID = 11082,
-            displayID = 10547,
-            loot = {},
-        },
-        {
             name = "The Unforgiven",
             npcID = 10516,
             displayID = 10771,
@@ -272,6 +266,7 @@ FLT.DUNGEON_REGISTRY["Stratholme"] = {
         {
             name = "Postmaster Malown",
             npcID = 11143,
+            optional = true,
             displayID = 10669,
             loot = {
                 {13388, "The Postmaster's Tunic", "Chest, Cloth", 3},
@@ -448,18 +443,11 @@ FLT.DUNGEON_REGISTRY["Stratholme"] = {
             },
         },
         {
-            name = "Balzaphon",
-            npcID = 14684,
-            description = "Summoned with a brazier from the Tier 0.5 set quests.",
-            loot = {
-                {23125, "Chains of the Lich", "Neck", 3},
-            },
-        },
-        {
             -- Scarlet side; Wowhead Forever zone drops 13.11.2026
             name = "Malor the Zealous",
             npcID = 11032,
-            rare = true,
+            optional = true,
+            displayID = 10458, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             loot = {
                 {276397, "Hand of the Zealous", "Two-Hand, Mace", 3},
                 {276398, "Scarlet Malice", "One-Hand, Mace", 3},
@@ -470,7 +458,8 @@ FLT.DUNGEON_REGISTRY["Stratholme"] = {
             -- summoned (Blacksmith plans); Wowhead Forever zone drops 13.11.2026
             name = "Crimson Hammersmith",
             npcID = 11120,
-            rare = true,
+            optional = true,
+            displayID = 10637, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             loot = {
                 {276403, "Scarlet Bonebreaker", "Two-Hand, Mace", 3},
                 {276404, "Masterwork Crimson Hammer", "Main Hand, Mace", 3},
@@ -480,7 +469,8 @@ FLT.DUNGEON_REGISTRY["Stratholme"] = {
             -- summoned (Blacksmith plans); Wowhead Forever zone drops 13.11.2026
             name = "Black Guard Swordsmith",
             npcID = 11121,
-            rare = true,
+            optional = true,
+            displayID = 775, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             loot = {
                 {276434, "Black Guard Skullcap", "Head, Mail", 3},
                 {276455, "Swordsmith Mitts", "Hands, Leather", 3},
@@ -491,11 +481,27 @@ FLT.DUNGEON_REGISTRY["Stratholme"] = {
             -- rare; Wowhead Forever zone drops 13.11.2026
             name = "Ezra Grimm",
             npcID = 11058,
-            rare = true,
+            optional = true,
+            displayID = 10475, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             loot = {
                 {276394, "Luxurious Smoking Jacket", "Chest, Cloth", 3},
                 {276395, "Grimm's Packing Gloves", "Hands, Cloth", 3},
                 {276396, "Ezra's Seal of Authenticity", "Finger", 3},
+            },
+        },
+        {
+            name = "Jarien and Sothos",
+            npcID = 16101,
+            optional = true,
+            displayID = 16018, -- CMaNGOS classic-db creature_template
+            aliases = { "Jarien", "Sothos" },
+            description = "Summoned with the Brazier of Beckoning (Tier 0.5 set quests).",
+            loot = { -- loot: CMaNGOS classic-db (user 23.11.2026)
+                {22301, "Ironweave Robe", "Chest, Cloth", 3},
+                {22327, "Amulet of the Redeemed", "Neck", 3},
+                {22328, "Legplates of Vigilance", "Legs, Plate", 3},
+                {22329, "Scepter of Interminable Focus", "Held In Off-Hand", 3},
+                {22334, "Band of Mending", "Finger", 3},
             },
         },
     },

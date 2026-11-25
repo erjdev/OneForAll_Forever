@@ -163,12 +163,6 @@ FLT.DUNGEON_REGISTRY["Alcaz Prison"] = {
                 {276746, "Defias Enforcer's Legguards", "Legs, Leather", 3},
             },
         },
-        {
-            name = "Zarla Ober",
-            npcID = 255707,
-            displayID = 139053,
-            loot = {},
-        },
     },
     -- trash: blue bind-on-equip drops of the dungeon's enemies - Wowhead Forever, one item ID block per new dungeon
     -- (several confirmed by "Dropped by" a mob of this dungeon), 13.11.2026

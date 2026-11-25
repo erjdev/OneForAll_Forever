@@ -84,18 +84,35 @@ function RT.CapInfo()
   return #t, CAP, t[1] and (t[1].t + CAP_TIME - now()) or nil
 end
 
--- boss names (data, aliases, the client's language) and NPC IDs -> boss
-local names, npcs = {}, {}
+-- boss names (data, aliases, the client's language, names learnt in game) and NPC IDs -> boss; items only one boss drops -> boss
+local names, npcs, onlyDrop = {}, {}, {}
 local function lower(s) return type(s) == "string" and s:lower() or "" end
+-- the names the game showed for a boss (target / mouseover / nameplate), account wide: a kill then counts under the client's own
+-- name too (German, French ... - user 23.11.: Zul'Farrak on a German client)
+local function learnedNames()
+  if type(OneForAllDB) ~= "table" then return {} end
+  OneForAllDB.bossNames = type(OneForAllDB.bossNames) == "table" and OneForAllDB.bossNames or {}
+  return OneForAllDB.bossNames
+end
 local function buildNames(d)
-  wipe(names); wipe(npcs)
+  wipe(names); wipe(npcs); wipe(onlyDrop)
+  local known, drops = learnedNames(), {}
   for _, b in ipairs(d and d.bosses or {}) do
     names[lower(b.name)] = b
     for _, a in ipairs(b.aliases or {}) do names[lower(a)] = b end
     if FLT.Name then names[lower(FLT.Name(b.name))] = b end
-    if b.npcID then npcs[b.npcID] = b end
+    if b.npcID then
+      npcs[b.npcID] = b
+      if type(known[b.npcID]) == "string" then names[lower(known[b.npcID])] = b end
+    end
+    for _, it in ipairs(b.loot or {}) do
+      local id = type(it) == "table" and (it.id or it[1])
+      if id then drops[id] = (drops[id] == nil or drops[id] == b) and b or false end
+    end
   end
+  for id, b in pairs(drops) do if b then onlyDrop[id] = b end end
 end
+local function byName(d, n) for _, b in ipairs(d and d.bosses or {}) do if b.name == n then return b end end end
 function RT.Killed(c, b) return c and c.kills and b and c.kills[b.name] end
 
 -- Forever hides some values inside dungeons ("secret" values): they must not be compared or parsed
@@ -117,8 +134,9 @@ RT._parseGUID = parseGUID -- tests
 -- something (a mob), and ENCOUNTER_END / BOSS_KILL / UNIT_DIED (when its GUID shows) name a boss.
 local inner = CreateFrame("Frame")
 local INNER = { "ENCOUNTER_END", "BOSS_KILL", "PARTY_KILL", "UNIT_DIED", "CHAT_MSG_COMBAT_HOSTILE_DEATH", "CHAT_MSG_COMBAT_XP_GAIN",
-  "PLAYER_DEAD", "PLAYER_MONEY", "CHAT_MSG_LOOT", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "PLAYER_EQUIPMENT_CHANGED", "QUEST_LOG_UPDATE" }
--- only until the copy is known (they fire often)
+  "PLAYER_DEAD", "PLAYER_MONEY", "CHAT_MSG_LOOT", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "PLAYER_EQUIPMENT_CHANGED", "QUEST_LOG_UPDATE",
+  "LOOT_OPENED" }
+-- the units you see (copy ID, boss names, dead bosses, rares) - inside instances only, each a quick look at one GUID
 local SEEK = { "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "NAME_PLATE_UNIT_ADDED" }
 local lastMoney, visitT0, partyKills, lastPartyKill = nil, nil, false, 0
 
@@ -159,7 +177,6 @@ local function learnCopy(uid, map)
   if RT.uid or not (d and c and uid) then return end
   if map and d.instanceID and map ~= d.instanceID then return end
   RT.uid = uid
-  seek(false)
   if c.uid and c.uid ~= uid then
     close(c)
     c = start(d, visitT0)
@@ -169,10 +186,125 @@ local function learnCopy(uid, map)
   if RT.Show then RT.Show() end
   if RT.onChange then RT.onChange() end
 end
+local kill
+-- Wings of one instance (6.2.15-beta3, Discord: a UBRS run shown as LBRS; user 23.11.: "genauso bauen wie bei dungeon journal,
+-- also auch mit mobs"): Blackrock Spire, Dire Maul and Scarlet Monastery share one instance ID per dungeon, so the game cannot
+-- tell the wing. The creatures you see (1) or kill (2) can: those that live in one wing only (Data/DungeonWings.lua). The run
+-- moves to a wing once it has 2 points and more than the shown wing - only while no boss is dead and the wing was not chosen
+-- by hand. The points belong to the run (out and back in keeps them).
+-- A boss of another wing killed (LBRS done, then UBRS in the same copy; user 23.11.: "auf boss kill auf jedenfall") ends the run
+-- and starts one for that wing in the same copy, from the first mob killed there (wingFirst). The tracker's title chooses the wing
+-- by hand (only dungeons that share their instance ID; user 23.11.: "A neuen lauf starten ... die automatik soll aber trotzdem
+-- beibehalten werden"): with bosses dead also a new run; the creatures then no longer move it, a boss kill still does.
+local wingT, wingScore, wingSeen, wingFirst, wingRun = nil, {}, {}, {}, nil
+local sibNpc, sibName = {}, {} -- the bosses of the other wings -> their dungeon
+-- the dungeons that share d's instance ID (d too), when there is more than one
+function RT.Wings(d)
+  if not (d and d.instanceID) then return nil end
+  local t
+  for _, o in ipairs(FLT.DUNGEONS or {}) do
+    if o.instanceID == d.instanceID then t = t or {}; t[#t + 1] = o end
+  end
+  return t and #t > 1 and t or nil
+end
+local function buildSiblings(d)
+  wipe(sibNpc); wipe(sibName)
+  for _, o in ipairs(RT.Wings(d) or {}) do
+    if o.key ~= d.key then
+      for _, b in ipairs(o.bosses or {}) do
+        if b.npcID then sibNpc[b.npcID] = o end
+        sibName[lower(b.name)] = o
+        if FLT.Name then sibName[lower(FLT.Name(b.name))] = o end
+      end
+    end
+  end
+end
+local function wingReset(c)
+  if wingRun ~= c then wipe(wingScore); wipe(wingSeen); wipe(wingFirst); wingRun = c; RT.wing = nil end
+end
+-- the run goes over to wing nd: renamed while no boss is dead, else a new run in the same copy from t0
+local function toWing(nd, t0, manual)
+  local c, d = current(), RT.active
+  if not (c and d and nd) or nd.key == d.key or RT.testRun then return end
+  wingReset(c)
+  if next(c.kills) then
+    local uid = c.uid
+    t0 = math.max(math.min(t0 or now(), now()), c.t0 or 0)
+    c.last = t0; close(c)
+    c = start(nd, t0)
+    if not c then return end
+    c.uid = uid
+    wingRun = c -- the points stay
+  else
+    c.key = nd.key
+  end
+  if manual then c.manual = true end
+  wipe(wingFirst) -- the next change of wing counts from then on
+  RT.active, RT.wing = nd, nd
+  buildNames(nd); buildSiblings(nd)
+  if RT.Show then RT.Show() end
+  if RT.onChange then RT.onChange() end
+  return c
+end
+RT._toWing = toWing -- tests
+local function wingSign(npc, weight)
+  local k = wingT and npc and wingT[npc]
+  local d, c = RT.active, current()
+  if not (k and d and c) or RT.testRun then return end
+  wingReset(c)
+  if (wingSeen[npc] or 0) >= weight then return end
+  wingScore[k] = (wingScore[k] or 0) + weight - (wingSeen[npc] or 0)
+  wingSeen[npc] = weight
+  if weight >= 2 and k ~= d.key and not wingFirst[k] then wingFirst[k] = now() end
+  local mine = (wingScore[d.key] or 0)
+  if k == d.key then
+    if mine >= 2 then RT.wing = d end
+    return
+  end
+  if wingScore[k] < 2 or wingScore[k] <= mine or next(c.kills) or c.manual then return end
+  toWing(dungeonByKey(k))
+end
+RT._wingSign = wingSign -- tests
+-- a boss of another wing killed: the run goes over to that wing (see above)
+local function bossOfWing(o)
+  if o and RT.active and o.key ~= RT.active.key and not RT.testRun then toWing(o, wingFirst[o.key]) end
+end
+-- the wing chosen by hand (the tracker's title)
+function RT.PickWing(o)
+  local c = current()
+  if not (o and c and RT.active) or RT.testRun then return end
+  if o.key == RT.active.key then c.manual = true; RT.wing = o; return end
+  toWing(o, now(), true)
+end
+-- the dungeon of this instance ID the tracker shows (sure = found by the creatures or chosen), else the one of its open run
+-- (sure when it was chosen by hand)
+function RT.WingDungeon(inst)
+  local d, c = RT.active, not RT.testRun and current()
+  if d and d.instanceID == inst then return d, RT.wing == d or (c and c.manual and c.key == d.key) or false end
+  local cd = c and dungeonByKey(c.key)
+  if cd and cd.instanceID == inst and now() - (c.last or 0) < RESUME then return cd, c.manual and true or false end
+end
+-- a unit you target, mouse over or see on a nameplate: the copy's ID; a boss's name in the client's language; a boss lying dead
+-- counts as killed (killed out of range, no event came); a rare boss seen alive lights up (user 23.11.: as Dungeon Journal does)
 local function seeUnit(unit)
   local ok, guid = pcall(UnitGUID, unit)
-  local _, uid, map = parseGUID(ok and guid or nil)
+  local npc, uid, map = parseGUID(ok and guid or nil)
   if uid then learnCopy(uid, map) end
+  if npc then wingSign(npc, 1) end
+  local b = npc and npcs[npc]
+  if not b then return end
+  local okN, name = pcall(UnitName, unit); name = okN and plain(name)
+  if type(name) == "string" and name ~= "" and lower(name) ~= lower(b.name) and not names[lower(name)] then
+    learnedNames()[npc] = name; names[lower(name)] = b
+  end
+  local c = current()
+  if not c or (uid and RT.uid and uid ~= RT.uid) then return end
+  local okD, dead = pcall(UnitIsDead, unit)
+  if okD and plain(dead) == true then kill(nil, npc, true)
+  elseif b.rare and not RT.Killed(c, b) then
+    c.rareSeen = c.rareSeen or {}
+    if not c.rareSeen[b.name] then c.rareSeen[b.name] = true; if RT.Paint then RT.Paint() end end
+  end
 end
 
 local function enter(d)
@@ -185,6 +317,9 @@ local function enter(d)
   if not c then return end
   if not c.done then c.t1 = nil end -- back in (a finished run keeps its time)
   c.last = now()
+  wingT = FLT.DUNGEON_WINGS and d.instanceID and FLT.DUNGEON_WINGS[d.instanceID]
+  RT.wing = ((c.manual and c.key == d.key) or (wingRun == c and (wingScore[d.key] or 0) >= 2)) and d or nil
+  buildSiblings(d)
   RT.active, RT.uid, RT.closed = d, nil, nil -- X hides it only while you are inside (user 23.11.: "geht man raus und wieder rein, sollte er wieder kommen")
   buildNames(d)
   lastMoney = GetMoney and GetMoney() or nil
@@ -203,7 +338,7 @@ local function leave()
     -- the copy never showed (no creature seen): the run still counts as one instance, once
     if not RT.uid and not c.uid then capAdd("run" .. (c.t0 or 0), c.t0) end
   end
-  RT.active, RT.uid, RT.closed = nil, nil, nil
+  RT.active, RT.uid, RT.closed, RT.wing, wingT = nil, nil, nil, nil, nil
   inner:UnregisterAllEvents()
   if RT.Hide then RT.Hide() end
 end
@@ -213,11 +348,13 @@ local function check()
   local ended = RT.testRun and RT.EndTest and (RT.EndTest() or true)
   local inInst, kind
   if IsInInstance then inInst, kind = IsInInstance() end
-  local d = inInst and (kind == "party" or kind == "raid") and FLT.FindCurrentDungeon and FLT.FindCurrentDungeon() or nil
+  local d, sure
+  if inInst and (kind == "party" or kind == "raid") and FLT.FindCurrentDungeon then d, sure = FLT.FindCurrentDungeon() end
   if d then
-    -- a Scarlet Monastery wing known only now (the place name came later): the run moves to it while nothing is dead
+    -- a wing known only now (a room's name came later): the run moves to it while nothing is dead. A guess (no room name)
+    -- never moves it (6.2.15-beta3)
     local c = current()
-    if RT.active and RT.active ~= d and c and c.key == RT.active.key and not next(c.kills) and RT.active.instanceID == d.instanceID then
+    if sure and RT.active and RT.active ~= d and c and c.key == RT.active.key and not next(c.kills) and not c.manual and RT.active.instanceID == d.instanceID then
       c.key = d.key; RT.active = d; buildNames(d)
       if RT.Show then RT.Show() end
       return
@@ -228,14 +365,24 @@ local function check()
 end
 RT._check = check -- tests
 
-local function kill(name, npc)
+-- late: found afterwards (its corpse, its loot) - its killing blow was not just now
+kill = function(name, npc, late, boss)
   local c, d = current(), RT.active
   if not (c and d) then return end
-  local b = (npc and npcs[npc]) or (name and names[lower(name)])
+  local b = boss or (npc and npcs[npc]) or (name and names[lower(name)])
+  if not b and not late then
+    local o = (npc and sibNpc[npc]) or (name and sibName[lower(name)])
+    if o then
+      bossOfWing(o)
+      c, d = current(), RT.active
+      if not (c and d and d.key == o.key) then return end
+      b = (npc and npcs[npc]) or (name and names[lower(name)])
+    end
+  end
   if b and not c.kills[b.name] then
     c.kills[b.name] = RT.Duration(c)
     -- the group's killing blow on it (PARTY_KILL) came just before and counted as a mob
-    if now() - lastPartyKill <= 3 and (c.trash or 0) > 0 then c.trash = c.trash - 1; lastPartyKill = 0 end
+    if not late and now() - lastPartyKill <= 3 and (c.trash or 0) > 0 then c.trash = c.trash - 1; lastPartyKill = 0 end
     if allDown(c, d) then c.done = true; c.t1 = now() end
     if RT.Paint then RT.Paint() end
     for m in pairs(RT.mapViews or {}) do if m:IsVisible() then m.MarkKills() end end -- the X on the dungeon map
@@ -264,17 +411,44 @@ inner:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5)
     -- your group killed something: a mob, unless its GUID shows a boss
     local npc, uid, map = parseGUID(a2)
     if uid then learnCopy(uid, map) end
-    if not (npc and npcs[npc]) then c.trash = (c.trash or 0) + 1; lastPartyKill = now() end
+    if npc then wingSign(npc, 2) end
+    if not (npc and (npcs[npc] or sibNpc[npc])) then c.trash = (c.trash or 0) + 1; lastPartyKill = now() end
     if npc then kill(nil, npc) end
     if RT.Paint then RT.Paint() end
   elseif event == "UNIT_DIED" then
     local npc, uid, map = parseGUID(a1)
     if uid then learnCopy(uid, map) end
-    if npc and npcs[npc] then kill(nil, npc) end
-  elseif event == "ENCOUNTER_END" then
-    if plain(a5) == 1 then kill(plain(a2)) end
-  elseif event == "BOSS_KILL" then
-    kill(plain(a2))
+    if npc then wingSign(npc, 2) end
+    if npc and (npcs[npc] or sibNpc[npc]) then kill(nil, npc) end
+  elseif event == "ENCOUNTER_END" or event == "BOSS_KILL" then
+    -- the fight's ID first (the same in every client language, Data/DungeonEncounters.lua), with the other bosses of the fight
+    -- (Ukorz with Ruuzlu, the Seven ...); then its name
+    if event == "ENCOUNTER_END" and plain(a5) ~= 1 then return end
+    local e = FLT.DUNGEON_ENCOUNTERS and FLT.DUNGEON_ENCOUNTERS[plain(a1) or 0]
+    local d = RT.active
+    if e and d and e[1] ~= d.key then
+      local o = dungeonByKey(e[1])
+      if o and o.instanceID and o.instanceID == d.instanceID then bossOfWing(o); d = RT.active end
+    end
+    local b = e and byName(d, e[2])
+    if b then
+      kill(nil, nil, nil, b)
+      for _, n in ipairs(e.also or {}) do local o = byName(d, n); if o then kill(nil, nil, true, o) end end
+    else kill(plain(a2)) end
+  elseif event == "LOOT_OPENED" or event == "LOOT_READY" then
+    -- what you loot: from a boss (its GUID), or an item only one boss of this dungeon drops - that boss is dead
+    local okN, n = pcall(GetNumLootItems); n = okN and plain(n)
+    if type(n) ~= "number" then return end
+    for slot = 1, n do
+      local okS, guid = pcall(GetLootSourceInfo, slot)
+      local npc = parseGUID(okS and guid or nil)
+      if npc and npcs[npc] then kill(nil, npc, true)
+      else
+        local okL, link = pcall(GetLootSlotLink, slot); link = okL and plain(link)
+        local id = type(link) == "string" and tonumber(link:match("item:(%d+)"))
+        if id and onlyDrop[id] then kill(nil, nil, true, onlyDrop[id]) end
+      end
+    end
   elseif event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     local text = plain(a1)
     deathPat = deathPat or pattern(UNITDIESOTHER or "%s dies.")
@@ -431,7 +605,9 @@ local function bossTip(self)
   if not (d and b) then return end
   cornerTip(self)
   GameTooltip:AddLine(FLT.Name and FLT.Name(b.name) or b.name, 1, 0.82, 0.2)
-  if b.rare then GameTooltip:AddLine(L["Rare - not there every time"], 0.78, 0.80, 0.86) end
+  if b.optional then GameTooltip:AddLine(L["Optional - not needed to finish the run"], 0.78, 0.80, 0.86)
+  elseif b.rare then GameTooltip:AddLine(L["Rare - not there every time"], 0.78, 0.80, 0.86) end
+  if b.rare and c and c.rareSeen and c.rareSeen[b.name] and not RT.Killed(c, b) then GameTooltip:AddLine(L["Seen in this run"], 0.85, 0.9, 1) end
   local k = RT.Killed(c, b)
   if k then GameTooltip:AddLine(string.format(L["Killed after %s"], RT.Clock(k)), 0.45, 1, 0.5) end
   -- the green arrow tells about an upgrade; which item shows in the loot window (user 23.11.: "der pfeil reicht")
@@ -634,6 +810,54 @@ local function build()
   -- no dungeon icon before the name any more: the dungeon's picture shows which dungeon it is (user 23.11.: "version ohne dieses icon")
   frame.title = FLT.NewFS(frame, nil, "OVERLAY", "GameFontNormal"); frame.title:SetPoint("LEFT", frame, "TOPLEFT", 10, -16)
   frame.title:SetJustifyH("LEFT"); frame.title:SetWordWrap(false); frame.title:SetTextColor(FLT.TextC(1, 0.82, 0.2))
+  -- dungeons that share their instance ID (LBRS / UBRS, Dire Maul, Scarlet Monastery): a click on the name chooses the wing
+  -- (6.2.15-beta4); dragging there still moves the tracker
+  local wb = CreateFrame("Button", nil, frame); frame.wingBtn = wb
+  wb:SetHeight(18); wb:SetPoint("LEFT", frame.title, "LEFT", -2, 0); wb:RegisterForDrag("LeftButton")
+  wb:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+  wb.arrow = wb:CreateTexture(nil, "OVERLAY"); wb.arrow:SetSize(12, 12); wb.arrow:SetPoint("RIGHT", 0, -1)
+  wb.arrow:SetTexture("Interface\\ChatFrame\\ChatFrameExpandArrow"); wb.arrow:SetRotation(-math.pi / 2)
+  wb:SetScript("OnDragStart", function() local f = frame:GetScript("OnDragStart"); if f then f(frame) end end)
+  wb:SetScript("OnDragStop", function() local f = frame:GetScript("OnDragStop"); if f then f(frame) end end)
+  wb:SetScript("OnEnter", function(self)
+    cornerTip(self); GameTooltip:AddLine(L["Wing"], 1, 0.82, 0.2)
+    GameTooltip:AddLine(L["Click: choose the wing - the tracker finds it by itself, choose it here when it is wrong."], 0.8, 0.8, 0.8, true)
+    GameTooltip:Show()
+  end)
+  wb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  wb:SetScript("OnClick", function(self)
+    local pop = frame.wingPop
+    if pop and pop:IsShown() then pop:Hide(); return end
+    local wings = RT.Wings(RT.active)
+    if not wings then return end
+    if not pop then
+      pop = CreateFrame("Frame", nil, frame); pop._ofaNoBG = true; UI.FramedPanel(pop)
+      pop:SetFrameStrata("DIALOG"); pop:SetToplevel(true); pop:EnableMouse(true); pop.rows = {}
+      pop:SetScript("OnEvent", function(p) if not p:IsMouseOver() and not frame.wingBtn:IsMouseOver() then p:Hide() end end)
+      pop:SetScript("OnShow", function(p) pcall(p.RegisterEvent, p, "GLOBAL_MOUSE_DOWN") end)
+      pop:SetScript("OnHide", function(p) p:UnregisterAllEvents() end)
+      frame.wingPop = pop
+    end
+    for i, o in ipairs(wings) do
+      local r = pop.rows[i]
+      if not r then
+        r = CreateFrame("Button", nil, pop); r:SetSize(196, 18); r:SetPoint("TOPLEFT", 6, -6 - (i - 1) * 18)
+        r:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+        r.text = FLT.NewFS(r, nil, "OVERLAY", "GameFontHighlightSmall"); r.text:SetPoint("LEFT", 6, 0); r.text:SetJustifyH("LEFT")
+        r:SetScript("OnClick", function(b) pop:Hide(); RT.PickWing(b.d) end)
+        pop.rows[i] = r
+      end
+      r.d = o; r:Show()
+      r.text:SetText(FLT.DungeonName and FLT.DungeonName(o.name) or o.name)
+      local on = RT.active and o.key == RT.active.key
+      r.text:SetTextColor(FLT.TextC(on and 1 or 0.9, on and 0.82 or 0.9, on and 0.2 or 0.9))
+    end
+    for i = #wings + 1, #pop.rows do pop.rows[i]:Hide() end
+    pop:SetSize(208, #wings * 18 + 12)
+    pop:ClearAllPoints(); pop:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -2)
+    pop:SetFrameLevel((frame:GetFrameLevel() or 0) + 30)
+    pop:Show()
+  end)
 
   -- X: hides the tracker until you leave the dungeon; on the test tracker it ends the test (user 23.11.: a hidden test tracker kept
   -- the real one hidden in the next dungeon)
@@ -787,6 +1011,9 @@ local function bossButton(i)
   bb.f:EnableMouse(false)
   -- the marks lie on their own layer above the portrait frame (on the button itself they were behind it; user 23.11.)
   local ov = CreateFrame("Frame", nil, bb); ov:SetAllPoints(); ov:SetFrameLevel((bb.f:GetFrameLevel() or 0) + 2); bb.ov = ov
+  -- a rare boss seen alive in this run: a soft glow around its portrait
+  bb.glow = ov:CreateTexture(nil, "OVERLAY", nil, 1); bb.glow:SetPoint("CENTER"); bb.glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+  bb.glow:SetBlendMode("ADD"); bb.glow:SetVertexColor(0.85, 0.9, 1, 0.9); bb.glow:Hide()
   bb.x = ov:CreateTexture(nil, "OVERLAY", nil, 3); bb.x:SetPoint("CENTER"); bb.x:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
   bb.up = ov:CreateTexture(nil, "OVERLAY", nil, 4); bb.up:SetPoint("BOTTOMRIGHT", 3, -3); FLT.SetTex(bb.up, UI.ASSET_ROOT .. "icon_arrow_up")
   bb.star = ov:CreateTexture(nil, "OVERLAY", nil, 4); bb.star:SetPoint("TOPRIGHT", 3, 3); FLT.SetTex(bb.star, UI.ASSET_ROOT .. "icon_star")
@@ -830,6 +1057,9 @@ function RT.Paint(marksToo)
   local d, c = RT.active, current()
   if not (d and c) then return end
   frame.title:SetText(FLT.DungeonName and FLT.DungeonName(d.name) or d.name)
+  local wings = not RT.testRun and RT.Wings(d)
+  frame.wingBtn:SetShown(wings and true or false)
+  if not wings and frame.wingPop then frame.wingPop:Hide() end
   local dur = RT.Duration(c)
   frame.time:SetText(RT.Clock(dur))
   local best = RT.Stats(d.key, c)
@@ -860,13 +1090,18 @@ function RT.Paint(marksToo)
   frame.best:SetShown(not cf.hideTime)
   local stats = k > 0
   frame.cog:ClearAllPoints()
-  if stats then frame.cog:SetPoint("TOPRIGHT", -8, -29); frame.title:SetPoint("RIGHT", frame.cap, "LEFT", -4, 0)
-  else frame.cog:SetPoint("RIGHT", frame.cap, "LEFT", -2, 0); frame.title:SetPoint("RIGHT", frame.cog, "LEFT", -4, 0) end
+  local tgap = wings and -18 or -4 -- room for the wing arrow
+  if stats then frame.cog:SetPoint("TOPRIGHT", -8, -29); frame.title:SetPoint("RIGHT", frame.cap, "LEFT", tgap, 0)
+  else frame.cog:SetPoint("RIGHT", frame.cap, "LEFT", -2, 0); frame.title:SetPoint("RIGHT", frame.cog, "LEFT", tgap, 0) end
+  if wings then frame.wingBtn:SetWidth(math.min(frame.title:GetStringWidth() or 0, frame.title:GetWidth() or 0) + 18) end
   frame.grip:SetShown(not cf.locked)
   local bosses = cf.hideBosses and {} or (d.bosses or {})
   frame.line:SetShown(stats and #bosses > 0)
   local nb, nRare = #bosses, 0
-  for _, b in ipairs(bosses) do if b.rare then nRare = nRare + 1 end end
+  local nOpt = 0
+  for _, b in ipairs(bosses) do if b.rare then nRare = nRare + 1; if b.optional then nOpt = nOpt + 1 end end end
+  -- the lower row: "Rare", "Optional" or both (6.2.16)
+  frame.rareL:SetText(nOpt == 0 and L["Rare"] or nOpt == nRare and L["Optional"] or (L["Rare"] .. " / " .. L["Optional"]))
   local g = bossGrid(nb - nRare, nRare, cf.perRow, stats and -70 or -32)
   if #bosses == 0 then g.height = stats and 66 or 32 end
   local gap = g.gap
@@ -893,6 +1128,7 @@ function RT.Paint(marksToo)
     local dead = RT.Killed(c, b) and true or false
     bb.f.portrait:SetDesaturated(dead); bb.f:SetAlpha(dead and 0.55 or 1)
     bb.x:SetSize(size * 0.7, size * 0.7); bb.x:SetShown(dead)
+    bb.glow:SetSize(size * 1.75, size * 1.75); bb.glow:SetShown(b.rare and not dead and c.rareSeen and c.rareSeen[b.name] and true or false)
     if log then bb.marks = RT.BossMarks(d, b, log) end
     local m = bb.marks or {}
     local ms = math.max(10, math.floor(size * 0.42))
@@ -910,7 +1146,7 @@ function RT.Layout() if frame and frame:IsShown() then RT.Paint() end end
 
 function RT.Show()
   if not wanted() then if frame then frame:Hide() end return end
-  if not frame then build() end
+  if not frame then build(); RT._frame = frame end
   marksFor = nil
   frame:Show()
   RT._pinTop()

@@ -140,7 +140,7 @@ function UI.CreateRunHistory(parent)
     end
     y = y - math.ceil(#items / 2) * (CARD_H + 8) - 6
     det.bossHead:ClearAllPoints(); det.bossHead:SetPoint("TOPLEFT", 4, y); y = y - 24
-    -- the fixed bosses first, then the rare ones (marked "Rare"; user 23.11.)
+    -- the fixed bosses first, then the rare / optional ones (marked "Rare" / "Optional"; user 23.11.)
     local bosses = {}
     for _, b in ipairs(d and d.bosses or {}) do if not b.rare then bosses[#bosses + 1] = b end end
     for _, b in ipairs(d and d.bosses or {}) do if b.rare then bosses[#bosses + 1] = b end end
@@ -149,7 +149,7 @@ function UI.CreateRunHistory(parent)
       r.d, r.boss = d, b
       r:ClearAllPoints(); r:SetPoint("TOPLEFT", 4, y); r:SetPoint("RIGHT", dchild, "RIGHT", -4, 0); y = y - 37
       if r.forBoss ~= b and UI.setBossPortrait then UI.setBossPortrait(r.f.portrait, d, b); r.forBoss = b end
-      r.name:SetText(NM(b.name) .. (b.rare and ("  |cffc7ccd8" .. L["Rare"] .. "|r") or ""))
+      r.name:SetText(NM(b.name) .. (b.rare and ("  |cffc7ccd8" .. (b.optional and L["Optional"] or L["Rare"]) .. "|r") or ""))
       local k = c.kills and c.kills[b.name]
       r.when:SetText(k and RT.Clock(k) or L["not killed"])
       r.when:SetTextColor(FLT.TextC(k and 0.35 or 0.62, k and 1 or 0.60, k and 0.45 or 0.56))

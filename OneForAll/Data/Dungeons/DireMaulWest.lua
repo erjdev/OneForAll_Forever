@@ -161,6 +161,7 @@ FLT.DUNGEON_REGISTRY["Dire Maul: West"] = {
         {
             name = "Lord Hel'nurath",
             npcID = 14506,
+            optional = true,
             displayID = 14556,
             description = "Summoned by warlocks with the Dreadsteed quest.",
             loot = {
@@ -168,16 +169,6 @@ FLT.DUNGEON_REGISTRY["Dire Maul: West"] = {
                 {18755, "Xorothian Firestick", "Ranged, Gun", 3},
                 {18756, "Dreadguard's Protector", "Off Hand, Shield", 3},
                 {18757, "Diabolic Mantle", "Shoulder, Cloth", 3},
-            },
-        },
-        {
-            name = "Revanchion",
-            npcID = 14690,
-            description = "Summoned with a brazier from the Tier 0.5 set quests.",
-            loot = {
-                {23127, "Cloak of Revanchion", "Back", 3},
-                {23128, "The Shadow's Grasp", "Hands, Cloth", 3},
-                {23129, "Bracers of Mending", "Wrist, Cloth", 3},
             },
         },
     },

@@ -71,6 +71,36 @@ and add the file to OneForAll.toc before UI\MainFrame.lua.
 Changelog (newest first)
 ========================
 
+6.2.16 - Hotfix: boss lists for a clean dungeon tracker
+=======================================================
+- Boss lists checked against Dungeon Journal, so the dungeon tracker finishes runs cleanly: quest and event enemies are no
+  longer listed as bosses (Veng and Maraudos in Maraudon, Verek, Mizzle the Crafty, the Scourge Invasion bosses, Stratholme
+  Courier, Spawn of Hakkar, Zarla Ober, Zin'aka).
+- New "Optional" bosses (own row in the tracker, not needed to finish a run): summoned and quest bosses such as Theldren, Mor
+  Grayhoof, Lord Valthalak, Jarien and Sothos, Ribbly Screwspigot, Sabella No-Eyes, Baron Aquanis, Princess Moira, the Fel
+  Steed, Postmaster Malown and the Stratholme smiths.
+- Rare instead of needed: Isalien, Blind Hunter, Earthcaller Halmgar, Kormok, Death Knight Darkreaver; Pyromancer Loregrain is
+  a normal boss now.
+- The Drowned City: the bosses use their real NPC IDs; Var'Taka is listed once.
+- Boss levels for the optional bosses, Ruuzlu, the Lordaeron Captain and the Mana Wraith.
+- Boss portraits: a boss without a known model (e.g. Sabella No-Eyes) asks the game for it.
+
+6.2.15 - Dungeon tracker finds more kills and the right wing
+============================================================
+- Dungeon tracker: boss fights are recognised by their number (the same in every client language), with every boss of a
+  fight (Chief Ukorz with Ruuzlu, the Seven, the Lost Dwarves, Rend with Gyth); a boss counts as killed when you see its corpse
+  or loot something only it drops; boss names are learnt in your client's language. A rare boss seen alive glows.
+- Dungeon tracker: Upper Blackrock Spire, the Dire Maul wings and the Scarlet Monastery wings share one instance with their
+  other wings - the tracker now finds the right wing by the creatures you see and kill there (and Blackrock Spire's room
+  names), also after a reset or in other client languages. Before, a UBRS run showed as LBRS.
+- Dungeon tracker: a boss of the other wing killed in the same instance (LBRS first, then UBRS) ends the run and starts one
+  for that wing, counted from the first mob you killed there. In these dungeons a click on the dungeon's name chooses the
+  wing by hand (a new run when bosses are already dead); a boss kill still switches it.
+- Zul'Farrak: the Sandfury Executioner is no longer listed as a boss.
+- Boss portraits for 18 classic bosses that showed a question mark (Ruuzlu, Onyxia, the Seven, Stratholme / Scholomance /
+  Dire Maul event bosses and more); a boss without a model in our data asks the game's own Encounter Journal (Umbra, War
+  Handler Ashka, Overlord Mugg).
+
 6.2.14 - Dungeon tracker, History, OneForAll in colour and many fixes
 =====================================================================
 - New: Dungeon tracker (on by default; Quality of Life > Interface > Dungeons & Raids, with a "Test" button): a small window

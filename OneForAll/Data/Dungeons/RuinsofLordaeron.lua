@@ -283,6 +283,7 @@ FLT.DUNGEON_REGISTRY["Ruins of Lordaeron"] = {
         {
             description = "Rare. Does not always spawn.",
             name = "Lordaeron Captain",
+            npcID = 255699, -- QuestieDB Forever
             displayID = 139050,
             rare = true,
             aliases = {"Lordaeron Captain"},

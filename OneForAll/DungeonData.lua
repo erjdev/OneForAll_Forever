@@ -118,7 +118,10 @@ local function convertBoss(b)
   return {
     name=b.name,
     npcID=b.npcID,
-    rare=b.rare,
+    -- optional (6.2.16, user 23.11.: like Dungeon Journal - summoned / quest bosses): not needed for a finished run, so it
+    -- counts as rare everywhere; only its label says "Optional"
+    rare=b.rare or b.optional,
+    optional=b.optional,
     description=b.description,
     icon=b.icon,
     customIcon=b.customIcon,
@@ -488,15 +491,15 @@ FLT.BOSS_LEVELS = {
   [246020] = "33", -- Shade of the Archmage
   -- The Drowned City (6.2.7-beta8, user 13.11.2026: values from screenshots / another AI, source not known - the user's
   -- decision, see CLAUDE.md; a level learned in game by targeting the boss is shown instead once known)
-  [270882] = "37", -- Zul'Alai
-  [270883] = "38", -- Var'Taka
-  [270884] = "38", -- Captain Dreadrise
-  [270885] = "39", -- Deathless Marrow
-  [270887] = "38", -- Primeval Elemental
-  [270888] = "38", -- Gill (rare)
+  [258905] = "37", -- Zul'Alai
+  [258924] = "38", -- Var'Taka
+  [260042] = "38", -- Captain Dreadrise
+  [260202] = "39", -- Deathless Marrow
+  [263886] = "38", -- Primeval Elemental
+  [264177] = "38", -- Gill (rare)
   [264172] = "38", -- Umbra (rare)
   [260468] = "38", -- "Pyromancer" Braxton (rare)
-  [270886] = "40", -- Min'loth the Serpent
+  [260243] = "40", -- Min'loth the Serpent
   -- Krol'dok Stronghold (6.2.7-beta9, user 13.11.2026: "bei kroldok stronghold auch noch die Boss level eintragen" - same
   -- source and decision as The Drowned City above)
   [258966] = "42", -- Slavecrusher Grox
@@ -533,4 +536,18 @@ FLT.BOSS_LEVELS = {
   [257016] = "52", -- Katerina the Cleaner
   [256236] = "51", -- The Questioner
   [255702] = "53", -- Blazeroar
+  -- 6.2.16-beta3 (user 23.11.2026): the optional / quest bosses of the classic dungeons from CMaNGOS classic-db creature_template
+  -- (MinLevel - MaxLevel); Lordaeron Captain and Mana Wraith from the user's list (another AI, citing WoWCensus / Warcraft Wiki /
+  -- Efficient Games) - plain game facts, a level learned in game wins
+  [16059] = "60", -- Theldren
+  [9543] = "53", -- Ribbly Screwspigot
+  [16080] = "60", -- Mor Grayhoof
+  [11032] = "60", -- Malor the Zealous
+  [11120] = "60", -- Crimson Hammersmith
+  [11121] = "61-62", -- Black Guard Swordsmith
+  [11058] = "61", -- Ezra Grimm
+  [16101] = "59-60", -- Jarien and Sothos
+  [7797] = "46", -- Ruuzlu
+  [255699] = "19", -- Lordaeron Captain
+  [246931] = "27-28", -- Mana Wraith
 }

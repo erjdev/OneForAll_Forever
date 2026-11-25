@@ -278,6 +278,7 @@ FLT.DUNGEON_REGISTRY["Blackfathom Deeps"] = {
             description = "Summoned with the Fathom Core (quest Amongst the Ruins). Optional, not on the usual route.",
             name = "Baron Aquanis",
             npcID = 12876,
+            optional = true,
             displayID = 110,
             aliases = {"Baron Aquanis"},
             loot = {

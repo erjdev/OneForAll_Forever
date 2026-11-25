@@ -56,6 +56,37 @@ end
 -- textures currently waiting for a boss to be seen in game, by NPC ID
 local waiting = {}
 
+-- 6.2.15 (user 23.11.2026): the game's own Encounter Journal knows the model of every boss fight it lists - asked once for a boss
+-- without a model in our data (the fight's ID from Data/DungeonEncounters.lua; the creature of that name, else the fight's first)
+local encOf, ejCache
+local function ejDisplay(dungeon, boss)
+  if type(EJ_GetCreatureInfo) ~= "function" or not (dungeon and boss and FLT.DUNGEON_ENCOUNTERS) then return nil end
+  if not encOf then
+    encOf, ejCache = {}, {}
+    for eid, e in pairs(FLT.DUNGEON_ENCOUNTERS) do
+      encOf[e[1] .. ":" .. e[2]] = eid
+      for _, n in ipairs(e.also or {}) do encOf[e[1] .. ":" .. n] = encOf[e[1] .. ":" .. n] or eid end
+    end
+  end
+  local key = (dungeon._real or dungeon).key
+  local k = tostring(key) .. ":" .. tostring(boss.name)
+  if ejCache[k] ~= nil then return ejCache[k] or nil end
+  local eid, found, first = encOf[k], nil, nil
+  local local_ = FLT.Name and FLT.Name(boss.name)
+  for i = 1, eid and 8 or 0 do
+    local ok, id, name, _, display = pcall(EJ_GetCreatureInfo, i, eid)
+    if not ok or not id then break end
+    if type(display) == "number" and display > 0 then
+      first = first or display
+      if name == boss.name or (local_ and name == local_) then found = display; break end
+    end
+  end
+  found = found or first
+  ejCache[k] = found or false
+  return found
+end
+
+local askCreature -- below
 local function setBossPortrait(tex, dungeon, boss)
   if not tex then return false end
   tex:SetTexCoord(0.04, 0.96, 0.04, 0.96)
@@ -70,6 +101,8 @@ local function setBossPortrait(tex, dungeon, boss)
   if showDisplay(tex, id) then note(dungeon, boss, "data", id); return true end
   id = learned(npc, "displayID")
   if showDisplay(tex, id) then note(dungeon, boss, "seen in game", id); return true end
+  id = ejDisplay(dungeon, boss)
+  if showDisplay(tex, id) then note(dungeon, boss, "encounter journal", id); return true end
   -- 6.2.7-beta10: a fitting icon instead of the "?" for bosses whose model the client cannot draw (Wowhead shows a
   -- server-only display); a portrait learned in game still replaces it
   if boss and boss.fallbackIcon then FLT.SetTex(tex, boss.fallbackIcon) else FLT.SetTex(tex, UNKNOWN_PORTRAIT) end
@@ -78,6 +111,7 @@ local function setBossPortrait(tex, dungeon, boss)
     tex._ofaNpc = npc
     waiting[npc] = waiting[npc] or setmetatable({}, { __mode = "k" })
     waiting[npc][tex] = { dungeon = dungeon, boss = boss }
+    askCreature(npc)
   end
   note(dungeon, boss, "unknown")
   return false
@@ -91,6 +125,39 @@ local function portraitLearned(npc, displayID)
   for tex, info in pairs(list) do
     if tex._ofaNpc == npc then setBossPortrait(tex, info.dungeon, info.boss) end
   end
+end
+
+-- 6.2.16 (user 23.11.2026, Sabella No-Eyes had no portrait): ask the game for a boss's model by its NPC ID -
+-- PlayerModel:SetCreature makes the client ask the server for a creature it does not know yet. Once per boss and session,
+-- one at a time; a model found is remembered like one seen in game (OneForAllDB.bossInfo).
+local cprobe, cqueue, ctried, cbusy = nil, {}, {}, false
+local function creatureNext()
+  local npc = table.remove(cqueue, 1)
+  if not npc then cbusy = false; if cprobe then cprobe:Hide() end return end
+  cbusy = true
+  if learned(npc, "displayID") then return creatureNext() end
+  cprobe = cprobe or CreateFrame("PlayerModel", nil, UIParent)
+  cprobe:SetSize(1, 1); cprobe:SetPoint("TOPLEFT", UIParent, "BOTTOMRIGHT", 10, -10); cprobe:Show()
+  if cprobe.ClearModel then pcall(cprobe.ClearModel, cprobe) end
+  if not (cprobe.SetCreature and pcall(cprobe.SetCreature, cprobe, npc)) then return creatureNext() end
+  local tries = 0
+  local function check()
+    tries = tries + 1
+    local ok, display = pcall(cprobe.GetDisplayInfo, cprobe)
+    if ok and type(display) == "number" and display > 0 then
+      remember(npc, "displayID", display)
+      portraitLearned(npc, display)
+      return creatureNext()
+    end
+    if tries < 15 then C_Timer.After(0.2, check) else creatureNext() end
+  end
+  check()
+end
+askCreature = function(npc)
+  if ctried[npc] or not (C_Timer and C_Timer.After) then return end
+  ctried[npc] = true
+  cqueue[#cqueue + 1] = npc
+  if not cbusy then cbusy = true; C_Timer.After(0, creatureNext) end
 end
 
 -- Boss level: learned in game (what the game itself shows, 6.2.7-beta8) or the static table (QuestieDB and others).
@@ -111,6 +178,7 @@ function FLT:GetBossType(boss)
 end
 function FLT:GetBossRank(boss)
   if not boss then return nil end
+  if boss.optional then return N"Optional" end
   if boss.rare then return N"Rare" end
   if boss.npcID and FLT.BOSS_SUMMONED and FLT.BOSS_SUMMONED[boss.npcID] then return N"Summoned" end
   return N"Elite"

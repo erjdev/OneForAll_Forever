@@ -224,6 +224,13 @@ FLT.DUNGEON_REGISTRY["Blackmaw Hold"] = {
                 {280086, "Octofinger Gauntlets", "Hands, Plate", 3},
             },
         },
+        {
+            name = "Sabella No-Eyes",
+            npcID = 269151,
+            optional = true,
+            loot = {
+            },
+        },
     },
     -- trash: blue bind-on-equip drops of the dungeon's enemies - Wowhead Forever, one item ID block per new dungeon
     -- (several confirmed by "Dropped by" a mob of this dungeon), 13.11.2026

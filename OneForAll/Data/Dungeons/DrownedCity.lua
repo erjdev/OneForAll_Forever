@@ -134,10 +134,12 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
             },
         },
     },
+    -- boss NPC IDs: the dungeon's own ones (6.2.16-beta4, user 23.11.2026: list of another AI citing Wowhead Forever / WoWCensus, matching
+    -- QuestieDB Forever); 270882-270888 were QuestieDB's "Staging Area" copies
     bosses = {
         {
             name = "Zul'Alai",
-            npcID = 270882,
+            npcID = 258905,
             displayID = 144475,
             loot = {
                 {274598, "Bloodslash Axe", "One-Hand, Axe", 3},
@@ -147,7 +149,7 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
         },
         {
             name = "Var'Taka",
-            npcID = 270883,
+            npcID = 258924,
             displayID = 144487,
             loot = {
                 {274601, "Harpoon of Command", "Two-Hand, Polearm", 3},
@@ -157,7 +159,7 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
         },
         {
             name = "Captain Dreadrise",
-            npcID = 270884,
+            npcID = 260042,
             displayID = 142144,
             loot = {
                 {274603, "Dreadfrost Saber", "Main Hand, Sword", 3},
@@ -167,7 +169,7 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
         },
         {
             name = "Deathless Marrow",
-            npcID = 270885,
+            npcID = 260202,
             displayID = 142245,
             loot = {
                 {274607, "Viscera Spaulders", "Shoulder, Mail", 3},
@@ -177,7 +179,7 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
         },
         {
             name = "Gill",
-            npcID = 270888,
+            npcID = 264177,
             displayID = 144023,
             rare = true,
             loot = {
@@ -187,7 +189,7 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
         },
         {
             name = "Primeval Elemental",
-            npcID = 270887,
+            npcID = 263886,
             displayID = 129945,
             loot = {
                 {274611, "Robe of the Drowned", "Chest, Cloth", 3},
@@ -197,19 +199,13 @@ FLT.DUNGEON_REGISTRY["The Drowned City"] = {
         },
         {
             name = "Min'loth the Serpent",
-            npcID = 270886,
+            npcID = 260243,
             displayID = 142286,
             loot = {
                 {274610, "Ritual-Binder's Gloves", "Hands, Leather", 3},
                 {274608, "Maw of Min'loth", "Off Hand, Shield", 3},
                 {274609, "Serpentbane Crown", "Head, Mail", 3},
             },
-        },
-        {
-            name = "Zin'aka",
-            npcID = 263742,
-            displayID = 143835,
-            loot = {},
         },
         {
             name = "Umbra",

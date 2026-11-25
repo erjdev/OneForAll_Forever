@@ -268,19 +268,5 @@ FLT.DUNGEON_REGISTRY["Maraudon"] = {
                 {17780, "Blade of Eternal Darkness", "Main Hand, Dagger", 4},
             },
         },
-        {
-            name = "Veng",
-            npcID = 13738,
-            displayID = 9418,
-            description = "The Fifth Khan, a spirit in the orange wing. Part of The Pariah's Instructions.",
-            loot = {},
-        },
-        {
-            name = "Maraudos",
-            npcID = 13739,
-            displayID = 9441,
-            description = "The Fourth Khan, a spirit in the purple wing. Part of The Pariah's Instructions.",
-            loot = {},
-        },
     },
 }

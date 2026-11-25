@@ -486,15 +486,10 @@ FLT.DUNGEON_REGISTRY["Scholomance"] = {
             },
         },
         {
-            name = "Lord Blackwood",
-            npcID = 14695,
-            description = "Summoned with a brazier from the Tier 0.5 set quests.",
-            loot = {
-            },
-        },
-        {
             name = "Kormok",
             npcID = 16118,
+            rare = true,
+            displayID = 16020, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             description = "Summoned with a brazier from the Tier 0.5 set quests.",
             loot = {
                 {22303, "Ironweave Pants", "Legs, Cloth", 3},
@@ -507,6 +502,7 @@ FLT.DUNGEON_REGISTRY["Scholomance"] = {
         {
             name = "Death Knight Darkreaver",
             npcID = 14516,
+            rare = true,
             displayID = 14591,
             description = "Summoned in the Great Ossuary for the paladin and shaman class quests.",
             loot = {

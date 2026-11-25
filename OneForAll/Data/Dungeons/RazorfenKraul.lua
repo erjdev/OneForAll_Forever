@@ -209,6 +209,7 @@ FLT.DUNGEON_REGISTRY["Razorfen Kraul"] = {
         {
             name = "Blind Hunter",
             npcID = 4425,
+            rare = true,
             displayID = 4735,
             loot = {
                 {6695, "Stygian Bone Amulet", "Neck", 3},
@@ -219,6 +220,7 @@ FLT.DUNGEON_REGISTRY["Razorfen Kraul"] = {
         {
             name = "Earthcaller Halmgar",
             npcID = 4842,
+            rare = true,
             displayID = 6102,
             loot = {
                 {6688, "Whisperwind Headdress", "Head, Leather", 3},

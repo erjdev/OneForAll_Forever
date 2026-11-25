@@ -310,15 +310,6 @@ FLT.DUNGEON_REGISTRY["The Temple of Atal'Hakkar"] = {
             },
         },
         {
-            name = "Spawn of Hakkar",
-            npcID = 5708,
-            displayID = 4065,
-            loot = {
-                {10801, "Slitherscale Boots", "Feet, Leather", 3},
-                {10802, "Wingveil Cloak", "Back", 2},
-            },
-        },
-        {
             name = "Avatar of Hakkar",
             npcID = 8443,
             displayID = 8053,

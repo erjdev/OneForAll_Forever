@@ -170,6 +170,8 @@ FLT.DUNGEON_REGISTRY["Dire Maul: East"] = {
         {
             name = "Isalien",
             npcID = 16097,
+            rare = true,
+            displayID = 16000, -- CMaNGOS classic-db creature_template (user 23.11.2026)
             description = "Summoned with a brazier from the Tier 0.5 set quests.",
             loot = {
                 {22304, "Ironweave Gloves", "Hands, Cloth", 3},

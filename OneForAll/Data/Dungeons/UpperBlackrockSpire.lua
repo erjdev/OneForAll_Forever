@@ -304,6 +304,23 @@ FLT.DUNGEON_REGISTRY["Upper Blackrock Spire"] = {
                 {16730, "Breastplate of Valor", "Chest, Plate", 3},
             },
         },
+        {
+            name = "Lord Valthalak",
+            npcID = 16042,
+            optional = true,
+            displayID = 14308, -- CMaNGOS classic-db creature_template
+            description = "Summoned with the Brazier of Beckoning (Tier 0.5 set quests).",
+            loot = { -- loot: CMaNGOS classic-db (user 23.11.2026)
+                {22302, "Ironweave Cowl", "Head, Cloth", 3},
+                {22335, "Lord Valthalak's Staff of Command", "Two-Hand, Staff", 3},
+                {22336, "Draconian Aegis of the Legion", "Off Hand, Shield", 3},
+                {22337, "Shroud of Domination", "Back", 3},
+                {22339, "Rune Band of Wizardry", "Finger", 3},
+                {22340, "Pendant of Celerity", "Neck", 3},
+                {22342, "Leggings of Torment", "Legs, Cloth", 3},
+                {22343, "Handguards of Savagery", "Hands, Mail", 3},
+            },
+        },
     },
     trashLoot = {
         {13260, "Wind Dancer Boots", "Feet, Mail", 3},

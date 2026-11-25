@@ -373,6 +373,20 @@ FLT.DUNGEON_REGISTRY["Lower Blackrock Spire"] = {
                 {13161, "Trindlehaven Staff", "Two-Hand, Staff", 3},
             },
         },
+        {
+            name = "Mor Grayhoof",
+            npcID = 16080,
+            optional = true,
+            displayID = 15997, -- CMaNGOS classic-db creature_template
+            description = "Summoned with the Brazier of Beckoning (Tier 0.5 set quests).",
+            loot = { -- loot: CMaNGOS classic-db (user 23.11.2026)
+                {22306, "Ironweave Belt", "Waist, Cloth", 3},
+                {22319, "Tome of Divine Right", "Held In Off-Hand", 3},
+                {22322, "The Jaw Breaker", "One-Hand, Mace", 3},
+                {22325, "Belt of the Trickster", "Waist, Leather", 3},
+                {22398, "Idol of Rejuvenation", "Relic, Idol", 3},
+            },
+        },
     },
     trashLoot = {
         {16696, "Devout Belt", "Waist, Cloth", 3},
