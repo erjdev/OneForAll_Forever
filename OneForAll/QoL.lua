@@ -25,6 +25,7 @@ local DEFAULTS = {
   ahScan = true, -- "Cheap Upgrade Scan" button in the auction house (6.2.13-beta19): on (user 21.11.)
   runTracker = true, -- dungeon tracker (6.2.14): on (user 23.11.: "ja an")
   gvMode = "overall", -- which % the Gear Value line shows (6.2.13): the whole gear's, as before (user 20.11.)
+  spellbookClickCasting = true,
   spellbookTrainer = true, -- trainer button in the spellbook: on (user 22.10.)
   classBright = true, -- brighter class colors: on (user 22.10.)
   mapFog = true, -- Remove Fog: on (user 22.10.)

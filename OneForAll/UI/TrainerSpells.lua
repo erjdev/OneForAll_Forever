@@ -976,6 +976,33 @@ local function addSpellbookButton()
   -- Quality of Life switch "spellbookTrainer" (on by default, user 22.10.)
   local function shown() b:SetShown(not (FLT.QoL and FLT.QoL.Get) or FLT.QoL.Get("spellbookTrainer") and true or false) end
   sbf:HookScript("OnShow", shown); shown()
+  if C_ClickBindings then
+    local shortcut = CreateFrame("Button", nil, sbf, "UIPanelButtonTemplate")
+    shortcut:SetText(L["Click Casting"])
+    shortcut:SetSize(shortcut:GetFontString():GetStringWidth() + 24, 20)
+    local title = psf.TitleContainer or psf
+    shortcut:SetFrameLevel(math.max(b:GetFrameLevel(), title:GetFrameLevel() + 1))
+    -- Keep the shortcut on the spellbook page but anchor it in the title strip, clear of the portrait.
+    shortcut:SetPoint("LEFT", psf, "TOPLEFT", 68, -11)
+    local function updateShortcut()
+      shortcut:SetEnabled(not InCombatLockdown())
+    end
+    shortcut:RegisterEvent("PLAYER_REGEN_DISABLED")
+    shortcut:RegisterEvent("PLAYER_REGEN_ENABLED")
+    shortcut:SetScript("OnEvent", updateShortcut)
+    shortcut:SetScript("OnShow", updateShortcut)
+    updateShortcut()
+    FLT.QoL.On("spellbookClickCasting", function(enabled) shortcut:SetShown(enabled) end)
+    shortcut:SetShown(FLT.QoL.Get("spellbookClickCasting"))
+    shortcut:SetScript("OnClick", function()
+      if InCombatLockdown() then return end
+      if not ClickBindingFrame then
+        local loadAddon = C_AddOns and C_AddOns.LoadAddOn or LoadAddOn
+        if loadAddon then loadAddon("Blizzard_ClickBindingUI") end
+      end
+      if ClickBindingFrame then ShowUIPanel(ClickBindingFrame) end
+    end)
+  end
   psf.ofaTrainerButton = b
   return true
 end
