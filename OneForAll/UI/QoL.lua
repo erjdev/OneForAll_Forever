@@ -967,7 +967,33 @@ local function createQoLPanel(parent)
   check(g, N"Farther camera zoom", N"Lets you zoom the camera out further.", nil, "cameraZoom")
   check(g, N"Hide error messages", N"Hides the red messages in the middle of the screen.", N"Messages like \"Out of range\" or \"Not enough rage\" are no longer shown. Still shown: inventory or bags full, quest log full, not enough money, carrying too many of an item.", "hideErrors")
   check(g, N"Flight times", N"A bar with the time left while you fly.", N"The time also shows in the tooltip of the destinations on the flight map. OneForAll measures your flights; routes you never flew are estimated (\"about\").", "flightTimes")
-  check(g, N"Thank players who buff you", N"Sends a /thank to players outside your group who buff you.", N"For buffs that last longer than 2 minutes. It comes 1 second later, not in combat, at most once every 5 minutes per player. Your target is not changed. /ofa thanks shows the last buffs.", "thanksBuff")
+  do
+    local r = row(g, N"Thank players who buff you", N"Sends your chosen emote to players outside your group who buff you.", N"For buffs that last longer than 2 minutes. It comes 1 second later, not in combat, at most once every 5 minutes per player. Your target is not changed. /ofa thanks shows the last buffs.")
+    local b, arrow = dropButton(r)
+    local function show()
+      local _, label = Q.BuffEmote()
+      local enabled = Q.Get("thanksBuff") and true or false
+      b:SetLabel(label)
+      b:SetEnabled(enabled)
+      b:SetLook(enabled)
+      arrow:SetAlpha(enabled and 1 or 0.35)
+    end
+    b:SetScript("OnClick", function(self)
+      local labels, tokens = Q.BuffEmotes(), {}
+      for token in pairs(labels) do tokens[#tokens + 1] = token end
+      table.sort(tokens, function(a, b) return labels[a] < labels[b] end)
+      MenuUtil.CreateContextMenu(self, function(_, menu)
+        menu:SetScrollMode(280)
+        local function selected(token) return Q.BuffEmote() == token end
+        local function pick(token) Q.Set("thanksEmote", token); show() end
+        for _, token in ipairs(tokens) do
+          menu:CreateRadio(labels[token], selected, pick, token)
+        end
+      end)
+    end)
+    switch(r, g, "thanksBuff", nil, nil, show)
+    refreshers[#refreshers + 1] = show
+  end
   g = group(c, N"Chat windows")
   do -- chat font size: -, value, +
     local r = row(g, N"Chat font size", N"The same font size for every chat window.", N"Go below 10 to switch it off (then the game's own setting is kept).")

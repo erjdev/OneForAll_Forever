@@ -43,7 +43,7 @@ local PAGES = {
     { N"Turn in quests automatically", N"You still pick rewards yourself.", "autoTurnIn" },
     { N"Quest XP on the experience bar", N"Shows the XP of your finished quests.", "questXP", rec = true },
     { N"Quest loot sparkles", N"Quest items in the world sparkle again.", "questSparkles", rec = true },
-    { N"Thank players who buff you", N"Sends a /thank to players outside your group who buff you.", "thanksBuff", rec = true },
+    { N"Thank players who buff you", N"Sends your chosen emote to players outside your group who buff you.", "thanksBuff", rec = true },
     { N"Quest marks on nameplates", N"A sword or a bag with your progress on mobs you need for a quest.", "questMarks" }, -- 6.0.2 (user 01.11.)
   } },
   { N"World Map", {
